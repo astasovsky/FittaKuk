@@ -1,86 +1,74 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [SerializeField] float dumping = 1.5f;
-    [SerializeField] float offset_x = 2f;
-    [SerializeField] bool isLeft;
-    [SerializeField] GameObject Player_m;
-    [SerializeField] GameObject Player_w;
+    [SerializeField] private bool isLeft;
+    [SerializeField] private GameObject playerMan;
+    [SerializeField] private GameObject playerWoman;
+    [SerializeField] private float leftLimit;
+    [SerializeField] private float rightLimit;
 
-    private Transform player;
-    private int lastX;
-
-    [SerializeField] float leftLimit;
-    [SerializeField] float rightLimit;
+    private const float Dumping = 1.5f;
+    private const float OffsetX = 2f;
+    private Transform _transform;
+    private Transform _player;
+    private int _lastX;
 
     public void SetGenderMale()
     {
-        player = Player_m.transform;
+        _player = playerMan.transform;
     }
+
     public void SetGenderFemale()
     {
-        player = Player_w.transform;
+        _player = playerWoman.transform;
     }
+
     public void HideCursor()
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        offset_x = Mathf.Abs(offset_x);
-        player = Player_m.transform;
-        FindPlayer(isLeft);
+        _transform = transform;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        if (player)
+        _player = playerMan.transform;
+        _lastX = Mathf.RoundToInt(_player.position.x);
+
+        Vector3 position = _transform.position;
+        float positionX = isLeft ? _player.position.x - OffsetX : _player.position.x + OffsetX;
+        _transform.position = new Vector3(positionX, position.y, position.z);
+    }
+
+    private void Update()
+    {
+        Vector3 position;
+        if (_player)
         {
-            int currentX = Mathf.RoundToInt(player.position.x);
-            if (currentX > lastX)
+            int currentX = Mathf.RoundToInt(_player.position.x);
+            if (currentX > _lastX)
             {
                 isLeft = false;
             }
-            else if (currentX < lastX)
+            else if (currentX < _lastX)
             {
                 isLeft = true;
             }
-            lastX = Mathf.RoundToInt(player.position.x);
-            Vector3 target;
-            if (isLeft)
-            {
-                target = new Vector3(player.position.x - offset_x, transform.position.y, transform.position.z);
-            }
-            else
-            {
-                target = new Vector3(player.position.x + offset_x, transform.position.y, transform.position.z);
-            }
-            Vector3 currentPosition = Vector3.Lerp(transform.position, target, dumping * Time.deltaTime);
-            transform.position = currentPosition;
+
+            _lastX = Mathf.RoundToInt(_player.position.x);
+            float targetPositionX = isLeft ? _player.position.x - OffsetX : _player.position.x + OffsetX;
+            position = _transform.position;
+            Vector3 target = new Vector3(targetPositionX, position.y, position.z);
+            Vector3 currentPosition = Vector3.Lerp(position, target, Dumping * Time.deltaTime);
+            _transform.position = currentPosition;
         }
 
-        transform.position = new Vector3(Mathf.Clamp(transform.position.x, leftLimit, rightLimit), transform.position.y, transform.position.z);
-    }
-
-    public void FindPlayer(bool playerIsLeft)
-    {
-        //player = GameObject.FindGameObjectWithTag("Player").transform;
-        lastX = Mathf.RoundToInt(player.position.x);
-        if (playerIsLeft)
-        {
-            transform.position = new Vector3(player.position.x - offset_x, transform.position.y, transform.position.z);
-        }
-        else
-        {
-            transform.position = new Vector3(player.position.x + offset_x, transform.position.y, transform.position.z);
-        }
+        position = _transform.position;
+        _transform.position = new Vector3(Mathf.Clamp(position.x, leftLimit, rightLimit), position.y, position.z);
     }
 }
